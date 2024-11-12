@@ -1,23 +1,38 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-import openai
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
 
-# Set up OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Set up Gemini API key
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Define a function to generate the story response using OpenAI
+# Define a function to generate the story response using Gemini
 def generate_story_response(conversation_history):
-    # Using the updated method with openai.ChatCompletion.create for the new API
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=conversation_history,
-        temperature=0.7,
+    # Create the generation configuration
+    generation_config = {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 40,
+        "max_output_tokens": 1024,  # Adjust token limit as needed
+        "response_mime_type": "text/plain",
+    }
+
+    # Create and configure the model for chat
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash", 
+        generation_config=generation_config
     )
-    return response.choices[0].message["content"]
+    
+    # Start or continue the chat session
+    chat_session = model.start_chat(history=conversation_history)
+    
+    # Send the user input and get the response
+    response = chat_session.send_message(conversation_history[-1]["parts"][0]["text"])
+    
+    return response.text
 
 # Main Streamlit app function
 def main():
@@ -25,14 +40,18 @@ def main():
 
     # Introduction to the story
     intro_message = {
-        "role": "assistant",
-        "content": (
-            "Welcome, brave soul! You are Kaelen, a wanderer who finds himself lost in the mysterious Cursed Forest. "
-            "Strange creatures, hidden dangers, and an ancient curse lurk in the shadows. Legend has it that the heart of the forest holds a powerful artifact, "
-            "but no one who has ventured deep enough has ever returned. It's up to you to decide whether to seek the artifact or escape the forest alive. "
-            "But beware, not all paths lead to safety... "
-            "\n\nYour adventure begins at the edge of the forest, where an eerie fog hangs in the air. Do you wish to enter the forest or turn back to safety?"
-        )
+        "parts": [
+            {
+                "type": "text",
+                "text": (
+                    "Welcome, brave soul! You are Kaelen, a wanderer who finds himself lost in the mysterious Cursed Forest. "
+                    "Strange creatures, hidden dangers, and an ancient curse lurk in the shadows. Legend has it that the heart of the forest holds a powerful artifact, "
+                    "but no one who has ventured deep enough has ever returned. It's up to you to decide whether to seek the artifact or escape the forest alive. "
+                    "But beware, not all paths lead to safety... "
+                    "\n\nYour adventure begins at the edge of the forest, where an eerie fog hangs in the air. Do you wish to enter the forest or turn back to safety?"
+                )
+            }
+        ]
     }
 
     # Initialize chat history in session state
@@ -42,20 +61,24 @@ def main():
 
     # Display the chat history
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        with st.chat_message("assistant"):
+            st.markdown(message["parts"][0]["text"])
 
     # Function to handle interaction and generate the next part of the story
     def handle_interaction(user_input):
         # Add user input to conversation history
-        user_message = {"role": "user", "content": user_input}
+        user_message = {
+            "parts": [{"type": "text", "text": user_input}]
+        }
         st.session_state.conversation_history.append(user_message)
 
         # Generate AI response based on the updated conversation history
         ai_response = generate_story_response(st.session_state.conversation_history)
 
         # Add AI response to conversation history
-        ai_message = {"role": "assistant", "content": ai_response}
+        ai_message = {
+            "parts": [{"type": "text", "text": ai_response}]
+        }
         st.session_state.conversation_history.append(ai_message)
 
         # Update the messages displayed on the app
@@ -72,7 +95,7 @@ def main():
         handle_interaction(user_input)
 
         # Check for an end condition in the AI response
-        if "The End." in st.session_state.messages[-1]["content"]:
+        if "The End." in st.session_state.messages[-1]["parts"][0]["text"]:
             st.write("### Game Over")
 
 if __name__ == "__main__":
