@@ -16,7 +16,7 @@ def generate_story_response(conversation_history):
         "temperature": 0.7,
         "top_p": 0.95,
         "top_k": 40,
-        "max_output_tokens": 1024,  # Adjust token limit as needed
+        "max_output_tokens": 1024,  # Lower token limit for concise responses
         "response_mime_type": "text/plain",
     }
 
@@ -73,8 +73,16 @@ def main():
         }
         st.session_state.conversation_history.append(user_message)
 
-        # Generate AI response based on the updated conversation history
-        ai_response = generate_story_response(st.session_state.conversation_history)
+        # Create a placeholder for the AI response
+        response_placeholder = st.empty()
+
+        # Show loading spinner
+        with st.spinner("Thinking..."):
+            # Generate AI response based on the updated conversation history
+            ai_response = generate_story_response(st.session_state.conversation_history)
+
+        # Display the response in the placeholder
+        response_placeholder.markdown(ai_response)
 
         # Add AI response to conversation history
         ai_message = {
@@ -82,8 +90,6 @@ def main():
             "parts": [{"text": ai_response}]
         }
         st.session_state.conversation_history.append(ai_message)
-
-        # Update the messages displayed on the app
         st.session_state.messages.append(user_message)
         st.session_state.messages.append(ai_message)
 
@@ -100,5 +106,5 @@ def main():
         if "The End." in st.session_state.messages[-1]["parts"][0]["text"]:
             st.write("### Game Over")
 
-if __name__ == "__main__":
-    main()
+if _name_ == "_main_":
+    main()
