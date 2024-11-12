@@ -106,5 +106,5 @@ def main():
         if "The End." in st.session_state.messages[-1]["parts"][0]["text"]:
             st.write("### Game Over")
 
-if _name_ == "_main_":
-    main()
+if __name__ == "__main__":
+    main()
