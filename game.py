@@ -7,7 +7,7 @@ import google.generativeai as genai
 load_dotenv()
 
 # Set up Gemini API key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Define a function to generate the story response using Gemini
 def generate_story_response(conversation_history):
