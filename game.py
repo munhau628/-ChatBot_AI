@@ -7,11 +7,11 @@ import google.generativeai as genai
 load_dotenv()
 
 # Set up Gemini API key
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Define a function to generate the story response using Gemini
 def generate_story_response(conversation_history):
-    # Create the generation configuration
+    # Define the generation configuration
     generation_config = {
         "temperature": 0.7,
         "top_p": 0.95,
@@ -40,9 +40,9 @@ def main():
 
     # Introduction to the story
     intro_message = {
+        "role": "model",
         "parts": [
             {
-                "type": "text",
                 "text": (
                     "Welcome, brave soul! You are Kaelen, a wanderer who finds himself lost in the mysterious Cursed Forest. "
                     "Strange creatures, hidden dangers, and an ancient curse lurk in the shadows. Legend has it that the heart of the forest holds a powerful artifact, "
@@ -68,7 +68,8 @@ def main():
     def handle_interaction(user_input):
         # Add user input to conversation history
         user_message = {
-            "parts": [{"type": "text", "text": user_input}]
+            "role": "user",
+            "parts": [{"text": user_input}]
         }
         st.session_state.conversation_history.append(user_message)
 
@@ -77,7 +78,8 @@ def main():
 
         # Add AI response to conversation history
         ai_message = {
-            "parts": [{"type": "text", "text": ai_response}]
+            "role": "model",
+            "parts": [{"text": ai_response}]
         }
         st.session_state.conversation_history.append(ai_message)
 
